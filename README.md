@@ -1,5 +1,16 @@
 # Cash
-A Swift HTTP Request library focused on forcing local cache (uses NSURLCache and NSURLConnection)
+A thin HTTP Request library focused on local caching, and written in Swift
+
+For iOS 8.1, NSURLSession and NSURLCache don't seem to play nice together... so I created <b>Cash</b>. <b>Cash</b> uses NSURLConnection instead of NSURLSession.
+
+## How does it work?
+
+<b>Cash</b> intercepts HTTP responses, and changes the "Cache-Control" header to allow NSURLCache to cache your responses for however long you want.
+
+## When should I use Cash?
+
+1. If you want a simple/easy way to cache your web requests and control their expiration times
+2. If you don't need any of the features that NSURLSession give you (background tasks, pause & continue tasks, etc.)
 
 ## Requirements
 
@@ -54,6 +65,17 @@ import Cash
 let params = ["foo" : "bar"]
 let body = NSJSONSerialization.dataWithJSONObject(params, options: nil, error: nil)
 Cash.shared.request(HTTPMethod.PUT, url: "http://httpbin.org/put", body: body, expiration: 60) { (data, error) -> Void in
+  println(data)
+}
+```
+
+### Pass in a NSMutableURLRequest
+
+```swift
+import Cash
+
+let request = NSMutableURLRequest(URL: NSURL(string: "http://httpbin.org/get")!)
+Cash.shared.sendRequest(request, expiration: 60) { (data, error) -> Void in
   println(data)
 }
 ```
