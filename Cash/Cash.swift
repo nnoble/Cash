@@ -56,9 +56,9 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     //MARK: - Request Methods
     
     /**
-    Make a GET request with forced cache time in seconds.
+    Make a GET request with forced cache time in seconds. Leave expiration as nil to use the Cache-Control value from the server.
     */
-    func get(url: String, expiration: Int, completionHandler: (NSData!, NSError!) -> Void) {
+    func get(url: String, expiration: Int?, completionHandler: (NSData!, NSError!) -> Void) {
         let nsurl = NSURL(string: url)!
         let request = NSMutableURLRequest(URL: nsurl)
         request.HTTPMethod = HTTPMethod.GET.rawValue
@@ -66,9 +66,9 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     }
     
     /**
-    Make a POST request with forced cache time in seconds. Uses a Dictionary for the body.
+    Make a POST request with forced cache time in seconds. Uses a Dictionary for the body.  Leave expiration as nil to use the Cache-Control value from the server.
     */
-    func post(url: String, body: Dictionary<String, AnyObject>, expiration: Int, completionHandler: (NSData!, NSError!) -> Void) {
+    func post(url: String, body: Dictionary<String, AnyObject>, expiration: Int?, completionHandler: (NSData!, NSError!) -> Void) {
         let nsurl = NSURL(string: url)!
         let request = NSMutableURLRequest(URL: nsurl)
         request.HTTPMethod = HTTPMethod.GET.rawValue
@@ -83,9 +83,9 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     }
     
     /**
-    Make a request with forced cache time in seconds.
+    Make a request with forced cache time in seconds. Leave expiration as nil to use the Cache-Control value from the server.
     */
-    func request(method: HTTPMethod, url: String, body: NSData?, expiration: Int, completionHandler: (NSData!, NSError!) -> Void) {
+    func request(method: HTTPMethod, url: String, body: NSData?, expiration: Int?, completionHandler: (NSData!, NSError!) -> Void) {
         let nsurl = NSURL(string: url)!
         let request = NSMutableURLRequest(URL: nsurl)
         request.HTTPMethod = method.rawValue
@@ -94,9 +94,9 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     }
     
     /**
-    Make a request with forced cache time in seconds.
+    Make a request with forced cache time in seconds. Leave expiration as nil to use the Cache-Control value from the server.
     */
-    func sendRequest(request: NSMutableURLRequest, expiration: Int, completionHandler: (NSData!, NSError!) -> Void) {
+    func sendRequest(request: NSMutableURLRequest, expiration: Int?, completionHandler: (NSData!, NSError!) -> Void) {
         request.cachePolicy = NSURLRequestCachePolicy.UseProtocolCachePolicy
         if let authorizationHeader = authorizationHeader {
             request.setValue(authorizationHeader, forHTTPHeaderField: "Authorization")
@@ -108,7 +108,9 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
         }
         let conn = NSURLConnection(request: request, delegate: self, startImmediately: false)!
         var dict : NSMutableDictionary = NSMutableDictionary()
-        dict.setObject(expiration, forKey: "expiration")
+        if let expiration = expiration {
+            dict.setObject(expiration, forKey: "expiration")
+        }
         dict.setObject(HandlerWrapper(completionHandler), forKey: "handler")
         connectionToInfoMapping[conn] = dict
         conn.start()
@@ -118,15 +120,17 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     
     func connection(connection: NSURLConnection, willCacheResponse cachedResponse: NSCachedURLResponse) -> NSCachedURLResponse? {
         if let dict = connectionToInfoMapping[connection] as NSMutableDictionary? {
-            let expiration = dict["expiration"] as Int
-            let response = cachedResponse.response as NSHTTPURLResponse
-            var headers = response.allHeaderFields
-            headers["Cache-Control"] = "max-age=\(expiration), private"
-            headers.removeValueForKey("Expires")
-            headers.removeValueForKey("s-maxage")
-            let newResponse = NSHTTPURLResponse(URL: response.URL!, statusCode: response.statusCode, HTTPVersion: "HTTP/1.1", headerFields: headers)
-            let cached = NSCachedURLResponse(response: newResponse!, data: cachedResponse.data, userInfo: headers, storagePolicy: NSURLCacheStoragePolicy.Allowed)
-            return cached
+            if let expiration = dict["expiration"] as Int? {
+                let response = cachedResponse.response as NSHTTPURLResponse
+                var headers = response.allHeaderFields
+                headers["Cache-Control"] = "max-age=\(expiration), private"
+                headers.removeValueForKey("Expires")
+                headers.removeValueForKey("s-maxage")
+                let newResponse = NSHTTPURLResponse(URL: response.URL!, statusCode: response.statusCode, HTTPVersion: "HTTP/1.1", headerFields: headers)
+                let cached = NSCachedURLResponse(response: newResponse!, data: cachedResponse.data, userInfo: headers, storagePolicy: NSURLCacheStoragePolicy.Allowed)
+                return cached
+            }
+            return cachedResponse
         }
         return nil
     }
