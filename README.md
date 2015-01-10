@@ -3,6 +3,8 @@ A thin HTTP Request library focused on local caching, and written in Swift
 
 For iOS 8.1, NSURLSession and NSURLCache don't seem to play nice together... so I created <b>Cash</b>. <b>Cash</b> uses NSURLConnection instead of NSURLSession.
 
+For a full list of functionality, check out the <a href="https://github.com/nnoble/Cash/wiki">wiki</a>
+
 ## How does it work?
 
 <b>Cash</b> intercepts HTTP responses, and changes the "Cache-Control" header to allow NSURLCache to cache your responses for however long you want.
