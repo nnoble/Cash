@@ -12,7 +12,7 @@ For a full list of functionality, check out the <a href="https://github.com/nnob
 ## When should I use Cash?
 
 1. If you want a simple/easy way to cache your web requests and control their expiration times
-2. If you don't need any of the features that NSURLSession give you (background tasks, pause & continue tasks, etc.)
+2. If you don't need any of the features that NSURLSession gives you (background tasks, pause & continue tasks, etc.)
 
 ## Requirements
 
