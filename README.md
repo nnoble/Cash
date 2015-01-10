@@ -77,7 +77,8 @@ Cash.shared.request(HTTPMethod.PUT, url: "http://httpbin.org/put", body: body, e
 import Cash
 
 let request = NSMutableURLRequest(URL: NSURL(string: "http://httpbin.org/get")!)
-Cash.shared.sendRequest(request, expiration: 60) { (data, error) -> Void in
+//Set the expiration to 'nil' to use the Cache-Control value returned from the server.
+Cash.shared.sendRequest(request, expiration: nil) { (data, error) -> Void in
   println(data)
 }
 ```
