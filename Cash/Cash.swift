@@ -26,10 +26,31 @@ private let _shared = Cash()
 
 class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     
-    var connectionToInfoMapping : Dictionary<NSURLConnection, AnyObject> = Dictionary()
+    private var connectionToInfoMapping : Dictionary<NSURLConnection, AnyObject> = Dictionary()
+    private var authorizationHeader : String? = nil
+    private var headers : [String: String]? = nil
     
     class var shared : Cash {
         return _shared;
+    }
+    
+    //MARK: - Header Methods
+    
+    /**
+    Sets the specified headers for all requests.
+    */
+    func setHeaders(headers : [String: String]) {
+        self.headers = headers
+    }
+    
+    /**
+    Add a basic auth header to all requests.
+    */
+    func setBasicAuth(username: NSString, password: NSString) {
+        let loginString = NSString(format: "%@:%@", username, password)
+        let loginData: NSData = loginString.dataUsingEncoding(NSUTF8StringEncoding)!
+        let base64LoginString = loginData.base64EncodedStringWithOptions(nil)
+        authorizationHeader = "Basic \(base64LoginString)"
     }
     
     //MARK: - Request Methods
@@ -77,6 +98,14 @@ class Cash : NSObject, NSURLConnectionDataDelegate, NSURLConnectionDelegate {
     */
     func sendRequest(request: NSMutableURLRequest, expiration: Int, completionHandler: (NSData!, NSError!) -> Void) {
         request.cachePolicy = NSURLRequestCachePolicy.UseProtocolCachePolicy
+        if let authorizationHeader = authorizationHeader {
+            request.setValue(authorizationHeader, forHTTPHeaderField: "Authorization")
+        }
+        if let headers = headers {
+            for (header, value) in headers {
+                request.setValue(value, forHTTPHeaderField: header)
+            }
+        }
         let conn = NSURLConnection(request: request, delegate: self, startImmediately: false)!
         var dict : NSMutableDictionary = NSMutableDictionary()
         dict.setObject(expiration, forKey: "expiration")
